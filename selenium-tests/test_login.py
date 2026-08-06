@@ -1,12 +1,22 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 import time
 
-# Open Chrome
+# Configure headless Chrome
+options = Options()
+options.add_argument("--headless=new")
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
+
 service = Service(ChromeDriverManager().install())
-driver = webdriver.Chrome(service=service)
+driver = webdriver.Chrome(service=service, options=options)
+
+# Open Chrome
+#service = Service(ChromeDriverManager().install())
+#driver = webdriver.Chrome(service=service)
 
 # Go to the site
 driver.get("https://www.saucedemo.com")
