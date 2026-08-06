@@ -1,0 +1,19 @@
+name: Run Tests
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./cypress-tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '24'
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1
+      - name: Install dependencies
+        run: npm install
+      - name: Run Cypress test
+        run: npx cypress run --browser chrome --spec cypress/e2e/login.cy.js
