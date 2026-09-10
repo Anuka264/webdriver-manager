@@ -22,7 +22,7 @@ pipeline {
         stage('Test') {
             steps {
                 dir('selenium-tests') {
-                    sh 'pytest test_suite.py --junitxml=report.xml --html=report.html --self-contained-html -v'
+                    sh 'pytest --junitxml=report.xml --html=report.html --self-contained-html -v'
                 }
             }
         }
@@ -39,14 +39,8 @@ pipeline {
 
     post {
         always {
-            junit 'selenium-tests/report.xml'                     
-            publishHTML(target: [
-                reportDir: 'selenium-tests',
-                reportFiles: 'report.html',
-                reportName: 'Selenium HTML Report',
-                keepAll: true,
-                alwaysLinkToLastBuild: true
-            ])
+            junit allowEmptyResults: true, testResults: 'selenium-tests/report.xml'
+            archiveArtifacts artifacts: 'selenium-tests/report.html', allowEmptyArchive: true
         }
         failure {
             echo 'Build FAILED — one or more Selenium tests did not pass.'
