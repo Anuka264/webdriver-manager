@@ -6,6 +6,10 @@ pipeline {
         }
     }
 
+    environment {
+        NODE_TLS_REJECT_UNAUTHORIZED = '0'
+    }
+
     stages {
         stage('Checkout') {
             steps {
