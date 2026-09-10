@@ -1,19 +1,14 @@
 pipeline {
-    agent {
-        docker {
-            image 'cypress/included:13.6.6'
-            args '-u root --entrypoint=""'
-        }
-    }
+    agent any
 
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                git branch: 'main', url: 'https://github.com/Anuka264/webdriver-manager.git'
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Build') {
             steps {
                 dir('cypress-tests') {
                     sh 'npm install'
@@ -21,21 +16,22 @@ pipeline {
             }
         }
 
-        stage('Run Cypress Test') {
+        stage('Test') {
             steps {
                 dir('cypress-tests') {
                     sh 'npx cypress run --spec cypress/e2e/login.cy.js'
                 }
             }
         }
-    }
 
-    post {
-        success {
-            echo 'Cypress test passed!'
-        }
-        failure {
-            echo 'Cypress test failed — check console output above.'
+        stage('Archive') {
+            when {
+                expression { currentBuild.currentResult == 'SUCCESS' }
+            }
+            steps {
+                echo 'Archiving artifacts since Test stage passed...'
+                archiveArtifacts artifacts: 'cypress-tests/cypress/**/*', allowEmptyArchive: true
+            }
         }
     }
 }
