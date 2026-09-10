@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'cypress/included:13.6.6'
+            args '-u root --entrypoint=""'
+        }
+    }
 
     stages {
         stage('Checkout') {
