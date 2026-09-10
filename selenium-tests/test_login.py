@@ -17,15 +17,13 @@ def test_saucedemo_login():
 
     try:
         driver.get("https://www.saucedemo.com")
-
-        # Type credentials
         driver.find_element(By.ID, "user-name").send_keys("standard_user")
         driver.find_element(By.ID, "password").send_keys("secret_sauce")
-
-        # Click login
         driver.find_element(By.ID, "login-button").click()
 
-        # Assert navigation success
-        assert "inventory" in driver.current_url, f"Expected 'inventory' in URL, got {driver.current_url}"
+        driver.find_element(By.ID, "add-to-cart-sauce-labs-backpack").click()
+        cart_badge = driver.find_element(By.CLASS_NAME, "shopping_cart_badge")
+
+        assert cart_badge.text == "1"
     finally:
         driver.quit()
