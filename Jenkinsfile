@@ -9,7 +9,8 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/Anuka264/webdriver-manager.git'
+                echo 'Code already checked out automatically via Pipeline script from SCM.'
+                sh 'ls -la'
             }
         }
 
