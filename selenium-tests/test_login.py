@@ -3,37 +3,29 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
-import time
 
-# Configure headless Chrome
-options = Options()
-options.add_argument("--headless=new")
-options.add_argument("--no-sandbox")
-options.add_argument("--disable-dev-shm-usage")
+def test_saucedemo_login():
+    options = Options()
+    options.add_argument("--headless=new")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--remote-allow-origins=*")
 
-service = Service(ChromeDriverManager().install())
-driver = webdriver.Chrome(service=service, options=options)
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=options)
 
-# Open Chrome
-#service = Service(ChromeDriverManager().install())
-#driver = webdriver.Chrome(service=service)
+    try:
+        driver.get("https://www.saucedemo.com")
 
-# Go to the site
-driver.get("https://www.saucedemo.com")
+        # Type credentials
+        driver.find_element(By.ID, "user-name").send_keys("standard_user")
+        driver.find_element(By.ID, "password").send_keys("secret_sauce")
 
-# Type into username and password boxes
-driver.find_element(By.ID, "user-name").send_keys("standard_user")
-driver.find_element(By.ID, "password").send_keys("secret_sauce")
+        # Click login
+        driver.find_element(By.ID, "login-button").click()
 
-# Click login
-driver.find_element(By.ID, "login-button").click()
-
-time.sleep(2)  # just so you can SEE it worked
-
-# Check we landed on the right page
-if "inventory" in driver.current_url:
-    print("✅ Login test PASSED")
-else:
-    print("❌ Login test FAILED")
-
-driver.quit()
+        # Assert navigation success
+        assert "inventory" in driver.current_url, f"Expected 'inventory' in URL, got {driver.current_url}"
+    finally:
+        driver.quit()
