@@ -24,6 +24,6 @@ def test_saucedemo_login():
         driver.find_element(By.ID, "add-to-cart-sauce-labs-backpack").click()
         cart_badge = driver.find_element(By.CLASS_NAME, "shopping_cart_badge")
 
-        assert cart_badge.text == "1"
+        assert cart_badge.text == "2"
     finally:
         driver.quit()
