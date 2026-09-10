@@ -18,6 +18,7 @@ pipeline {
             steps {
                 dir('cypress-tests') {
                     sh 'npm install'
+                    sh 'npx cypress install'
                 }
             }
         }
