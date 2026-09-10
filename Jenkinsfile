@@ -1,36 +1,28 @@
 pipeline {
     agent {
         docker {
-            image 'cypress/included:13.6.6'
-            args '-u root --entrypoint=""'
+            image 'python:3.11-slim'
+            args '-u root'
         }
-    }
-
-    environment {
-        NODE_TLS_REJECT_UNAUTHORIZED = '0'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                echo 'Code already checked out automatically via Pipeline script from SCM.'
-                sh 'ls -la'
+                git branch: 'main', url: 'https://github.com/Anuka264/webdriver-manager.git'
             }
         }
 
         stage('Build') {
             steps {
-                dir('cypress-tests') {
-                    sh 'npm install'
-                    sh 'npx cypress install'
-                }
+                sh 'pip install -r selenium-tests/requirements.txt pytest pytest-html'
             }
         }
 
         stage('Test') {
             steps {
-                dir('cypress-tests') {
-                    sh 'npx cypress run --spec cypress/e2e/login.cy.js'
+                dir('selenium-tests') {
+                    sh 'pytest test_suite.py --junitxml=report.xml --html=report.html --self-contained-html -v'
                 }
             }
         }
@@ -40,9 +32,24 @@ pipeline {
                 expression { currentBuild.currentResult == 'SUCCESS' }
             }
             steps {
-                echo 'Archiving artifacts since Test stage passed...'
-                archiveArtifacts artifacts: 'cypress-tests/cypress/**/*', allowEmptyArchive: true
+                archiveArtifacts artifacts: 'selenium-tests/*.png', allowEmptyArchive: true
             }
+        }
+    }
+
+    post {
+        always {
+            junit 'selenium-tests/report.xml'                     
+            publishHTML(target: [
+                reportDir: 'selenium-tests',
+                reportFiles: 'report.html',
+                reportName: 'Selenium HTML Report',
+                keepAll: true,
+                alwaysLinkToLastBuild: true
+            ])
+        }
+        failure {
+            echo 'Build FAILED — one or more Selenium tests did not pass.'
         }
     }
 }
