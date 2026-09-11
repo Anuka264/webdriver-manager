@@ -10,20 +10,25 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'yourdockerhubusername/exam-app'
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = 'anuka264/exam-app'
         IMAGE_TAG  = "build-${BUILD_NUMBER}"
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/YOUR_USERNAME/YOUR_REPO.git'
+                echo 'Code already checked out automatically via Pipeline script from SCM.'
+                sh 'ls -la'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .'
+                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
             }
         }
 
@@ -31,14 +36,14 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-                    sh 'docker push ${IMAGE_NAME}:${IMAGE_TAG}'
+                    sh "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
                 }
             }
         }
 
         stage('Run Container') {
             steps {
-                sh 'docker run -d -p 3003:3003 --name exam-app-${BUILD_NUMBER} ${IMAGE_NAME}:${IMAGE_TAG}'
+                sh "docker run -d -p 3000:3000 --name exam-app-${BUILD_NUMBER} ${IMAGE_NAME}:${IMAGE_TAG}"
             }
         }
     }
