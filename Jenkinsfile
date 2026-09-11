@@ -6,16 +6,8 @@ pipeline {
         }
     }
 
-pipeline {
-    agent any
-
     environment {
-pipeline {
-    agent any
-
-    environment {
-        IMAGE_NAME = 'anuka264/exam-app'
-        IMAGE_TAG  = "build-${BUILD_NUMBER}"
+        NODE_TLS_REJECT_UNAUTHORIZED = '0'   // only if you hit the same TLS quirk as last night
     }
 
     stages {
@@ -26,25 +18,29 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Install Dependencies') {
             steps {
-                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+                sh 'pip install -r requirements.txt pytest pytest-html'
             }
         }
 
-        stage('Push to Registry') {
+        stage('Run Test Suite') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-                    sh "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
-                }
+                sh 'pytest test_suite.py --junitxml=report.xml --html=report.html --self-contained-html -v'
             }
         }
+    }
 
-        stage('Run Container') {
-            steps {
-                sh "docker run -d -p 3000:3000 --name exam-app-${BUILD_NUMBER} ${IMAGE_NAME}:${IMAGE_TAG}"
-            }
+    post {
+        always {
+            junit 'report.xml'
+            publishHTML(target: [
+                reportDir: '.',
+                reportFiles: 'report.html',
+                reportName: 'Selenium HTML Report',
+                keepAll: true,
+                alwaysLinkToLastBuild: true
+            ])
         }
     }
 }
