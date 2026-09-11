@@ -6,47 +6,40 @@ pipeline {
         }
     }
 
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = 'yourdockerhubusername/exam-app'
+        IMAGE_TAG  = "build-${BUILD_NUMBER}"
+    }
+
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/Anuka264/webdriver-manager.git'
+                git branch: 'main', url: 'https://github.com/YOUR_USERNAME/YOUR_REPO.git'
             }
         }
 
-        stage('Build') {
+        stage('Build Docker Image') {
             steps {
-                sh '''
-                    apt-get update && apt-get install -y wget gnupg unzip curl
-                    curl -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /etc/apt/trusted.gpg.d/google-archive-keyring.gpg
-                    echo "deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/google-archive-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
-                    apt-get update
-                    apt-get install -y google-chrome-stable
-                    pip install -r selenium-tests/requirements.txt pytest pytest-html
-                '''
+                sh 'docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .'
             }
         }
 
-        stage('Test') {
+        stage('Push to Registry') {
             steps {
-                dir('selenium-tests') {
-                    sh 'pytest --junitxml=report.xml --html=report.html --self-contained-html -v'
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    sh 'docker push ${IMAGE_NAME}:${IMAGE_TAG}'
                 }
             }
         }
-    }
 
-    post {
-        always {
-            junit allowEmptyResults: true, testResults: 'selenium-tests/report.xml'
-            publishHTML(target: [
-                allowMissing: false,
-                alwaysLinkToLastBuild: true,
-                keepAll: true,
-                reportDir: 'selenium-tests',
-                reportFiles: 'report.html',
-                reportName: 'Selenium HTML Report',
-                reportTitles: 'Selenium Test Report'
-            ])
+        stage('Run Container') {
+            steps {
+                sh 'docker run -d -p 3003:3003 --name exam-app-${BUILD_NUMBER} ${IMAGE_NAME}:${IMAGE_TAG}'
+            }
         }
     }
 }
