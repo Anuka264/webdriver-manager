@@ -6,7 +6,7 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Install Dependencies') {
+        stage('Run Selenium Tests') {
             steps {
                 withDockerContainer(image: 'python:3.11-slim', args: '-u root') {
                     sh '''
@@ -21,14 +21,9 @@ pipeline {
                         apt-get update && apt-get install -y google-chrome-stable
 
                         pip install --no-cache-dir -r requirements.txt
+
+                        pytest selenium-tests/ --junitxml=report.xml --html=report.html --self-contained-html -v
                     '''
-                }
-            }
-        }
-        stage('Run Test Suite') {
-            steps {
-                withDockerContainer(image: 'python:3.11-slim') {
-                    sh 'pytest selenium-tests/ --junitxml=report.xml --html=report.html --self-contained-html -v'
                 }
             }
         }
