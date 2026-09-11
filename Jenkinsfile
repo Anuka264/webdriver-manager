@@ -21,7 +21,7 @@ pipeline {
 
         stage('Run Test Suite') {
             steps {
-                sh 'pytest test_suite.py --junitxml=report.xml --html=report.html --self-contained-html -v'
+                sh 'pytest selenium-tests/ --junitxml=report.xml --html=report.html --self-contained-html -v'
             }
         }
     }
