@@ -1,34 +1,41 @@
 pipeline {
-    agent any
-
-    environment {
-        IMAGE_NAME = 'localhost:5000/exam-app'
-        IMAGE_TAG  = "build-${BUILD_NUMBER}"
+    agent {
+        docker {
+            image 'python:3.11-slim'
+            args '-u root'
+        }
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/Anuka264/webdriver-manager.git'
+                sh 'ls -la'
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Install Dependencies') {
             steps {
-                sh 'docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .'
+                sh 'pip install -r requirements.txt pytest pytest-html webdriver-manager'
             }
         }
 
-        stage('Push to Registry') {
+        stage('Run Test Suite') {
             steps {
-                sh 'docker push ${IMAGE_NAME}:${IMAGE_TAG}'
+                sh 'pytest test_suite.py --junitxml=report.xml --html=report.html --self-contained-html -v'
             }
         }
+    }
 
-        stage('Run Container') {
-            steps {
-                sh 'docker run -d -p 3003:3003 --name exam-app-${BUILD_NUMBER} ${IMAGE_NAME}:${IMAGE_TAG}'
-            }
+    post {
+        always {
+            junit 'report.xml'
+            publishHTML(target: [
+                reportDir: '.',
+                reportFiles: 'report.html',
+                reportName: 'Selenium HTML Report',
+                keepAll: true,
+                alwaysLinkToLastBuild: true
+            ])
         }
     }
 }
