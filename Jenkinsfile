@@ -5,42 +5,37 @@ pipeline {
             args '-u root'
         }
     }
+pipeline {
+    agent any
 
     environment {
-        NODE_TLS_REJECT_UNAUTHORIZED = '0'   // only if you hit the same TLS quirk as last night
+        IMAGE_NAME = 'localhost:5000/exam-app'
+        IMAGE_TAG  = "build-${BUILD_NUMBER}"
     }
 
     stages {
         stage('Checkout') {
             steps {
-                echo 'Code already checked out automatically via Pipeline script from SCM.'
-                sh 'ls -la'
+                git branch: 'main', url: 'https://github.com/YOUR_USERNAME/YOUR_REPO.git'
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Build Docker Image') {
             steps {
-                sh 'pip install -r requirements.txt pytest pytest-html'
+                sh 'docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .'
             }
         }
 
-        stage('Run Test Suite') {
+        stage('Push to Registry') {
             steps {
-                sh 'pytest test_suite.py --junitxml=report.xml --html=report.html --self-contained-html -v'
+                sh 'docker push ${IMAGE_NAME}:${IMAGE_TAG}'
             }
         }
-    }
 
-    post {
-        always {
-            junit 'report.xml'
-            publishHTML(target: [
-                reportDir: '.',
-                reportFiles: 'report.html',
-                reportName: 'Selenium HTML Report',
-                keepAll: true,
-                alwaysLinkToLastBuild: true
-            ])
+        stage('Run Container') {
+            steps {
+                sh 'docker run -d -p 3003:3003 --name exam-app-${BUILD_NUMBER} ${IMAGE_NAME}:${IMAGE_TAG}'
+            }
         }
     }
 }
